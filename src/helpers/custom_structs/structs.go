@@ -1,4 +1,4 @@
-package main
+package custom_structs
 
 type User struct {
 	Username string `json:"username"`

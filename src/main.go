@@ -4,14 +4,14 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/ztdevelops/go-project/src/helpers" 
+	"github.com/ztdevelops/go-project/src/helpers/database" 
 )
 
 const PORT = "8000"
 
 func main() {
 	RouteHandlers()
-	helpers.InitDatabaseConnection()
+	database.InitDatabaseConnection()
 
 	printString := "Listening for requests at http://localhost:" + PORT
 	log.Println(printString)

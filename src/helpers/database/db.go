@@ -1,4 +1,4 @@
-package helpers
+package database
 
 import (
 	"fmt"

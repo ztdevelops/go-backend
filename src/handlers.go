@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/ztdevelops/go-project/src/helpers/custom_structs"
 )
 
 const ENDPOINT_HIT = "ENDPOINT HIT:"
@@ -21,7 +23,7 @@ func defaultHandler(w http.ResponseWriter, r *http.Request) {
 
 func testAPIHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(ENDPOINT_HIT, "test")
-	users := []User{
+	users := []custom_structs.User{
 		{Username: "user 1", Password: "123"},
 		{Username: "user 2", Password: "456"},
 	}
