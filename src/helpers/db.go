@@ -1,19 +1,21 @@
 package helpers
 
 import (
-	"database/sql"
 	"fmt"
 
-	_ "github.com/go-sql-driver/mysql"
-
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func InitDatabaseConnection() {
 	fmt.Println("Establishing connection with database.")
-	db, err := sql.Open("mysql", "root:password@tcp(127.0.0.1:3306)/test")
+
+	dsn := "root:password@tcp(127.0.0.1:3306)/test"
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
 	}
 
-	defer db.Close()
+	db2, _ := db.DB()
+	defer db2.Close()
 }
