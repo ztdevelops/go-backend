@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/ztdevelops/go-project/src/helpers/database"
 )
@@ -13,3 +15,14 @@ type App struct {
 	Router
 	database.Database
 }
+
+type Writer struct {
+	http.ResponseWriter
+}
+
+type Response struct {
+	Status 	int
+	Message string
+}
+
+const ContentTypeJSON = "application/json"
