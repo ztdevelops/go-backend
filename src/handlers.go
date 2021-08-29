@@ -110,7 +110,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	user, err := SharedApp.GetUser(received.Username)
 	if err != nil {
 		log.Println("Cannot get user:", err)
-		writer.Respond(http.StatusBadRequest, err.Error())
+		writer.Respond(http.StatusUnauthorized, "Credentials are incorrect")
 		return
 	}
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(received.Password)); err != nil {
