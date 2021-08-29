@@ -1,6 +1,4 @@
-package routes
-
-import "github.com/gorilla/mux"
+package custom_types
 
 // HTTP Request Methods
 const RGET string 		= "GET"
@@ -9,7 +7,3 @@ const RPUT string		= "PUT"
 const RDELETE string 	= "DELETE"
 
 const ENDPOINT_HIT 		= "ENDPOINT HIT:"
-
-type Router struct { 
-	*mux.Router 
-}

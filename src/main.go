@@ -5,24 +5,19 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/ztdevelops/go-project/src/helpers/database"
-	"github.com/ztdevelops/go-project/src/helpers/routes"
 )
 
 const PORT = "8000"
 
-type App struct {
-	Router 	routes.Router
-	DB		database.Database
-}
+var SharedApp App
 
 func main() {
-	app := App{}
-	app.Router = routes.Router{
+
+	SharedApp.Router = Router{
 		mux.NewRouter(),
 	}
-	app.Router.HandleRoutes()	
-	app.DB.InitDatabaseConnection()
+	SharedApp.HandleRoutes()	
+	SharedApp.InitDatabaseConnection()
 
 	printString := "Listening for requests at http://localhost:" + PORT
 	log.Println(printString)
