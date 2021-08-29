@@ -21,6 +21,20 @@ func (a *App) HandleRoutes() {
 	http.Handle("/", a.Router)
 }
 
+func (w *Writer) Respond(code int, message string) {
+	r := Response{
+		Status:  code,
+		Message: message,
+	}
+
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(r)
+}
+
+func (w *Writer) SetContentType(ct string) {
+	w.Header().Set("Content-Type", ct)
+}
+
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "default")
 	fmt.Fprintf(w, "Default landing page.")
@@ -41,16 +55,28 @@ func NotImplemented(w http.ResponseWriter, r *http.Request) {
 
 func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign up")
+	writer := Writer{w}
+	writer.SetContentType(ContentTypeJSON)
+
 	received := &custom_types.User{}
-	err := json.NewDecoder(r.Body).Decode(received); if err != nil {
+	err := json.NewDecoder(r.Body).Decode(received)
+	if err != nil {
 		log.Println("Cannot decode:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		writer.Respond(http.StatusBadRequest, err.Error())
 		return
 	}
+
+	if received.Username == "" || received.Password == "" {
+		log.Println("Received empty credentials. Rejecting request.")
+		writer.Respond(http.StatusBadRequest, "Failed to create account: invalid credentials")
+		return
+	}
+
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(received.Password), 8)
 	if err != nil {
 		log.Println("Error hashing password:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		writer.Respond(http.StatusBadRequest, err.Error())
+		return
 	}
 
 	submitted := &custom_types.User{
@@ -60,9 +86,11 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 
 	if err := SharedApp.SignUp(*submitted); err != nil {
 		log.Println("Cannot sign up:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		writer.Respond(http.StatusBadRequest, err.Error())
 		return
 	}
+
+	writer.Respond(http.StatusOK, "User successfully created.")
 }
 
 func HandleSignIn(w http.ResponseWriter, r *http.Request) {
