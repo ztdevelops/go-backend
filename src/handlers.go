@@ -10,8 +10,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+// HandleRoutes initialises the connections to all the explicitly coded routes.
 func (a *App) HandleRoutes() {
-
 	a.Router.HandleFunc("/", DefaultHandler).Methods((custom_types.RGET))
 	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom_types.RGET))
 
@@ -21,7 +21,8 @@ func (a *App) HandleRoutes() {
 	http.Handle("/", a.Router)
 }
 
-func (w *Writer) Respond(code int, message string) {
+// Respond responds to the API requests with a status code and message.
+func (w *Writer) Respond(code int, message interface{}) {
 	r := Response{
 		Status:  code,
 		Message: message,
@@ -31,6 +32,7 @@ func (w *Writer) Respond(code int, message string) {
 	json.NewEncoder(w).Encode(r)
 }
 
+// SetContentType sets the content type of the response.
 func (w *Writer) SetContentType(ct string) {
 	w.Header().Set("Content-Type", ct)
 }
@@ -53,6 +55,7 @@ func NotImplemented(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Not implemented.")
 }
 
+// HandleSignUp creates an account based on the submitted request.
 func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign up")
 	writer := Writer{w}
@@ -93,25 +96,33 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	writer.Respond(http.StatusOK, "User successfully created.")
 }
 
+// HandleSignIn attempts to log the user into their accounts based on the submitted credentials.
 func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign in")
+	writer := Writer{w}
+	writer.SetContentType(ContentTypeJSON)
+	
 	received := &custom_types.User{}
 	if err := json.NewDecoder(r.Body).Decode(received); err != nil {
-		log.Println("Cannot decode:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		writer.Respond(http.StatusBadRequest, err.Error())
 		return
 	}
 	user, err := SharedApp.GetUser(received.Username)
 	if err != nil {
 		log.Println("Cannot get user:", err)
-		w.WriteHeader(http.StatusBadRequest)
+		writer.Respond(http.StatusBadRequest, err.Error())
 		return
 	}
 	if err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(received.Password)); err != nil {
-		log.Println("Comparison failed:", err)
-		w.WriteHeader(http.StatusUnauthorized)
+		writer.Respond(http.StatusUnauthorized, "Credentials are incorrect")
 		return
 	}
 
-	log.Println("Login OK.")
+	writer.Respond(http.StatusOK, struct{
+		Message string
+		JWT string
+	} {
+		"Login OK.",
+		"123456",
+	})
 }

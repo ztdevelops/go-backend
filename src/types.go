@@ -22,7 +22,7 @@ type Writer struct {
 
 type Response struct {
 	Status 	int
-	Message string
+	Message interface{}
 }
 
 const ContentTypeJSON = "application/json"
