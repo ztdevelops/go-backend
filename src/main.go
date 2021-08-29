@@ -20,7 +20,7 @@ func main() {
 	SharedApp.HandleRoutes()
 	SharedApp.InitDatabaseConnection()
 
-	printString := "Listening for requests at http://localhost:" + PORT
+	printString := "Listening for requests..."
 	log.Println(printString)
 	log.Fatal(http.ListenAndServe(":"+PORT, nil))
 }
