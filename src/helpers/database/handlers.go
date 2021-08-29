@@ -12,12 +12,12 @@ import (
 func (database *Database) InitDatabaseConnection() {
 	log.Println("Establishing connection with database.")
 
-	dsn := "root:password@tcp(127.0.0.1:3306)/test"
+	dsn := "mysql://b6da1ad5ae2d23:019d058a@us-cdbr-east-04.cleardb.com/heroku_410a444a5d5a3c8?reconnect=true"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
 	}
-	log.Println("Database connection OK on port 127.0.0.1:3306")
+	log.Println("Database connection OK/")
 	database.DB = db
 	database.MigrateTables()
 }
