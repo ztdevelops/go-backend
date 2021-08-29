@@ -14,8 +14,10 @@ func (a *App) HandleRoutes() {
 
 	a.Router.HandleFunc("/", DefaultHandler).Methods((custom_types.RGET))
 	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom_types.RGET))
-	a.Router.HandleFunc("/signup", HandleSignUp).Methods((custom_types.RPOST))
-	a.Router.HandleFunc("/signin", HandleSignIn).Methods((custom_types.RPOST))
+
+	// APIs
+	a.Router.HandleFunc("/api/signup", HandleSignUp).Methods((custom_types.RPOST))
+	a.Router.HandleFunc("/api/signin", HandleSignIn).Methods((custom_types.RPOST))
 	http.Handle("/", a.Router)
 }
 
