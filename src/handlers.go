@@ -60,6 +60,8 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign up")
 	writer := Writer{w}
 	writer.SetContentType(ContentTypeJSON)
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
+	// (*w).Header().Set("Access-Control-Allow-Origin", "*")
 
 	received := &custom_types.User{}
 	err := json.NewDecoder(r.Body).Decode(received)
@@ -101,6 +103,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign in")
 	writer := Writer{w}
 	writer.SetContentType(ContentTypeJSON)
+	writer.Header().Set("Access-Control-Allow-Origin", "*")
 	
 	received := &custom_types.User{}
 	if err := json.NewDecoder(r.Body).Decode(received); err != nil {
