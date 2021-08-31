@@ -2,7 +2,6 @@ package database
 
 import (
 	"log"
-	"reflect"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -36,11 +35,12 @@ func (database *Database) MigrateTables() (err error) {
 	}
 
 	for _, table := range tablesToMigrate {
+		tableName := custom_types.GetStructName(table)
 		if err = database.AutoMigrate(table); err != nil {
-			log.Println(reflect.TypeOf(table).Name(), "failed to migrate.")
+			log.Println(tableName, "failed to migrate.")
 			return
 		}
-		log.Println(reflect.TypeOf(table).Name(), "OK.")
+		log.Println(tableName, "OK.")
 	}
 
 	log.Println("Migration OK.")
