@@ -2,6 +2,7 @@ package database
 
 import (
 	"log"
+	"reflect"
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
@@ -9,20 +10,39 @@ import (
 	"github.com/ztdevelops/go-project/src/helpers/custom_types"
 )
 
-func (database *Database) InitDatabaseConnection() {
+func (database *Database) InitDatabaseConnection() (err error) {
 	log.Println("Establishing connection with database.")
 
-	dsn := "root:password@tcp(127.0.0.1:3306)/test"
+	dsn := "root:password@tcp(127.0.0.1:3306)/backend-main"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
 	}
 	log.Println("Database connection OK on port 127.0.0.1:3306")
 	database.DB = db
-	database.MigrateTables()
+	if err = database.MigrateTables(); err != nil {
+		return
+	}
+	return
 }
 
-func (database *Database) MigrateTables() {
+func (database *Database) MigrateTables() (err error) {
 	log.Println("Migrating tables.")
-	database.AutoMigrate(&custom_types.User{})
+
+	tablesToMigrate := []interface{}{
+		custom_types.User{},
+		custom_types.Post{},
+		custom_types.Comment{},
+	}
+
+	for _, table := range tablesToMigrate {
+		if err = database.AutoMigrate(table); err != nil {
+			log.Println(reflect.TypeOf(table).Name(), "failed to migrate.")
+			return
+		}
+		log.Println(reflect.TypeOf(table).Name(), "OK.")
+	}
+
+	log.Println("Migration OK.")
+	return
 }
