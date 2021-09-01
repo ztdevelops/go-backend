@@ -18,6 +18,8 @@ func (a *App) HandleRoutes() {
 	// APIs
 	a.Router.HandleFunc("/api/signup", HandleSignUp).Methods((custom_types.RPOST))
 	a.Router.HandleFunc("/api/signin", HandleSignIn).Methods((custom_types.RPOST))
+	a.Router.HandleFunc("/api/posts", NotImplemented).Methods(custom_types.RGET, custom_types.RPUT, custom_types.RPOST, custom_types.RDELETE)
+	a.Router.HandleFunc("/api/posts/:id", NotImplemented).Methods(custom_types.RGET, custom_types.RPUT, custom_types.RPOST, custom_types.RDELETE)
 	http.Handle("/", a.Router)
 }
 
@@ -101,7 +103,7 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign in")
 	writer := Writer{w}
 	writer.SetContentType(ContentTypeJSON)
-	
+
 	received := &custom_types.User{}
 	if err := json.NewDecoder(r.Body).Decode(received); err != nil {
 		writer.Respond(http.StatusBadRequest, err.Error())
@@ -125,4 +127,10 @@ func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 		"Login OK.",
 		"123456",
 	})
+}
+
+func HandlePosts(w http.ResponseWriter, r *http.Request) {
+}
+
+func HandlePostByID(w http.ResponseWriter, r *http.Request) {
 }
