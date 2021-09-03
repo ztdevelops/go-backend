@@ -6,19 +6,29 @@ import (
 	"log"
 	"net/http"
 
+	jwtmiddleware "github.com/auth0/go-jwt-middleware"
 	"github.com/ztdevelops/go-project/src/helpers/custom_types"
 	"golang.org/x/crypto/bcrypt"
 )
 
 // HandleRoutes initialises the connections to all the explicitly coded routes.
 func (a *App) HandleRoutes() {
+	jwt := GetJWTMiddleware()
 	a.Router.HandleFunc("/", DefaultHandler).Methods((custom_types.RGET))
 	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom_types.RGET))
 
-	// APIs
+	// APIs (No need for auth)
 	a.Router.HandleFunc("/api/signup", HandleSignUp).Methods((custom_types.RPOST))
 	a.Router.HandleFunc("/api/signin", HandleSignIn).Methods((custom_types.RPOST))
+
+	// APIs (Require auth)
+	a.Router.Handle("/api/test", handleWithJWT(jwt, NotImplemented)).Methods(custom_types.RGET)
 	http.Handle("/", a.Router)
+}
+
+func handleWithJWT(middleware *jwtmiddleware.JWTMiddleware, f func(http.ResponseWriter, *http.Request)) http.Handler {
+	httpHandler := http.HandlerFunc(f)
+	return middleware.Handler(httpHandler)
 }
 
 // Respond responds to the API requests with a status code and message.
@@ -59,7 +69,7 @@ func NotImplemented(w http.ResponseWriter, r *http.Request) {
 func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign up")
 	writer := Writer{w}
-	writer.SetContentType(ContentTypeJSON)
+	writer.SetContentType(custom_types.ContentTypeJSON)
 
 	received := &custom_types.User{}
 	err := json.NewDecoder(r.Body).Decode(received)
@@ -100,7 +110,7 @@ func HandleSignUp(w http.ResponseWriter, r *http.Request) {
 func HandleSignIn(w http.ResponseWriter, r *http.Request) {
 	log.Println(custom_types.ENDPOINT_HIT, "sign in")
 	writer := Writer{w}
-	writer.SetContentType(ContentTypeJSON)
+	writer.SetContentType(custom_types.ContentTypeJSON)
 	
 	received := &custom_types.User{}
 	if err := json.NewDecoder(r.Body).Decode(received); err != nil {

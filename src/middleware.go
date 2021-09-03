@@ -8,8 +8,15 @@ import (
 	"github.com/auth0/go-jwt-middleware"
 	"github.com/form3tech-oss/jwt-go"
 	"github.com/ztdevelops/go-project/src/helpers/custom_types"
-	// "github.com/rs/cors"
+	"github.com/rs/cors"
 )
+
+func GetCorsWrapper(allowedHeaders, allowedMethods []string) *cors.Cors {
+	return cors.New(cors.Options{
+		AllowedMethods: allowedMethods,
+		AllowedHeaders: allowedHeaders,
+	})
+}
 
 func GetJWTMiddleware() *jwtmiddleware.JWTMiddleware {
 	validationKeyGetter := func(token *jwt.Token) (interface{}, error) {
