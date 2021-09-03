@@ -25,4 +25,6 @@ type Response struct {
 	Message interface{}
 }
 
-const ContentTypeJSON = "application/json"
+const PORT string = "8000"
+
+var SharedApp App
