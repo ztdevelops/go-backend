@@ -12,7 +12,7 @@ import (
 func (database *Database) InitDatabaseConnection() {
 	log.Println("Establishing connection with database.")
 
-	dsn := "root:password@tcp(127.0.0.1:3306)/test"
+	dsn := "root:password@tcp(127.0.0.1:3306)/local-production"
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		panic(err.Error())
