@@ -1,8 +1,19 @@
 package custom_types
 
 type User struct {
-	Username string `json:"username" gorm:"unique;not null"`
-	Password string `json:"password" gorm:"not null"`
+	ID                int
+	Email             string `json:"email" gorm:"unique;not null"`
+	Password          string `json:"password" gorm:"not null"`
+	ReturnSecureToken bool   `json:"returnSecureToken"`
+}
+
+type UserReponse struct {
+	IDToken      string `json:"idToken"`
+	Email        string `json:"email"`
+	RefreshToken string `json:"refreshToken"`
+	ExpiresIn    string `json:"expiresIn"`
+	LocalID      string `json:"localId"`
+	Registered   bool   `json:"registered"`
 }
 
 type Jwks struct {
