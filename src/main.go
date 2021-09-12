@@ -7,9 +7,6 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const PORT = "8000"
-
-var SharedApp App
 
 func main() {
 
@@ -19,7 +16,10 @@ func main() {
 	SharedApp.HandleRoutes()	
 	SharedApp.InitDatabaseConnection()
 
+	allowedHeaders := []string{"GET", "POST"}
+	allowedMethods := []string{"Content-Type", "Origin", "Accept", "*"}
+	corsWrapper := GetCorsWrapper(allowedHeaders, allowedMethods)
 	printString := "Listening for requests at http://localhost:" + PORT
 	log.Println(printString)
-	log.Fatal(http.ListenAndServe(":"+PORT, nil))
+	log.Fatal(http.ListenAndServe(":"+PORT, corsWrapper.Handler(SharedApp.Router)))
 }

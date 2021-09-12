@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	firebase "firebase.google.com/go"
 	"github.com/gorilla/mux"
 	"github.com/ztdevelops/go-project/src/helpers/database"
 )
@@ -14,6 +15,7 @@ type Router struct {
 type App struct {
 	Router
 	database.Database
+	firebase.App
 }
 
 type Writer struct {
@@ -25,4 +27,6 @@ type Response struct {
 	Message interface{}
 }
 
-const ContentTypeJSON = "application/json"
+const PORT string = "8000"
+
+var SharedApp App
