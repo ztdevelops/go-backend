@@ -31,7 +31,6 @@ func (a *App) HandleRoutes() {
 
 func (a *App) TestVerifyToken(w http.ResponseWriter, r *http.Request) {
 	if err := VerifyToken(&a.App, r); err != nil {
-		log.Println("failed to verify token:", err)
 		return
 	}
 	log.Println("token ok.")

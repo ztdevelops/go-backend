@@ -46,12 +46,13 @@ func VerifyToken(a *firebase.App, r *http.Request) (err error) {
 	client, err := a.Auth(ctx)
 	if err != nil {
 		log.Println("error getting auth client:", err)
+		return
 	}
 	idToken := strings.Split(bearerToken, "Bearer ")[1]
 
 	_, err = client.VerifyIDToken(ctx, idToken)
 	if err != nil {
-		log.Println("wrong token")
+		return
 	}
 	return
 }
@@ -63,11 +64,10 @@ func LogInWithFirebase(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println("failed to decode user:", err)
 	}
-	log.Println(received)
+
+	// Default to always true, as we want the secure token for authentication purposes.
+	received.ReturnSecureToken = true
 	url := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s", getEnv("API_KEY"))
-	if !received.ReturnSecureToken {
-		received.ReturnSecureToken = true
-	}
 	u, err := json.Marshal(received)
 	if err != nil {
 		log.Println("error marshalling user:", err)
