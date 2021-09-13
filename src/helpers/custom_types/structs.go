@@ -1,5 +1,9 @@
 package custom_types
 
+import (
+	"net/http"
+)
+
 type User struct {
 	ID                int
 	Email             string `json:"email" gorm:"unique;not null"`
@@ -27,4 +31,20 @@ type JSONWebKeys struct {
 	N   string   `json:"n"`
 	E   string   `json:"e"`
 	X5c []string `json:"x5c"`
+}
+
+type Response struct {
+	Status 	int
+	Message interface{}
+}
+
+/* 
+	STRUCT EXTENSIONS
+*/ 
+type CustomWriter struct {
+	http.ResponseWriter
+}
+
+type CustomRequest struct {
+	*http.Request
 }
