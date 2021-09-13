@@ -3,12 +3,14 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
-	"path/filepath"
 
+
+	"cloud.google.com/go/storage"
 	"github.com/ztdevelops/go-project/src/helpers/custom_types"
+	"google.golang.org/api/option"
 )
 
 // HandleRoutes initialises the connections to all the explicitly coded routes.
@@ -58,20 +60,23 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("File Size: %+v\n", handler.Size)
 		log.Printf("MIME Header: %+v\n", handler.Header)
 
-		tempFilename := "upload-*" + filepath.Ext(handler.Filename)
-		tempFile, err := ioutil.TempFile("../temp", tempFilename)
+		storageClient, err := storage.NewClient(request.Context(), option.WithCredentialsFile("storage.json"))
 		if err != nil {
-			log.Println("failed to create tempFile...", err)
+			log.Println("failed to init google cloud client:", err)
 			return
 		}
-		defer tempFile.Close()
 
-		fileBytes, err := ioutil.ReadAll(file)
-		if err != nil {
-			log.Println("failed to read file:", err)
+		sw := storageClient.Bucket("amp-bucket").Object(handler.Filename).NewWriter(request.Context())
+
+		if _, err = io.Copy(sw, file); err != nil {
+			log.Println("error copying file to cloud storage:", err)
 			return
 		}
-		tempFile.Write(fileBytes)
+
+		if err = sw.Close(); err != nil {
+			log.Println("failed to close connection to cloud storage:", err)
+			return
+		}
 
 		log.Println("file successfully uploaded.")
 	}
