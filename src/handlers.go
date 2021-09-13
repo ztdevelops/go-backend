@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"path/filepath"
 
 	"github.com/ztdevelops/go-project/src/helpers/custom_types"
 )
@@ -57,7 +58,8 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		log.Printf("File Size: %+v\n", handler.Size)
 		log.Printf("MIME Header: %+v\n", handler.Header)
 
-		tempFile, err := ioutil.TempFile("../temp-images", "upload-*.jpg")
+		tempFilename := "upload-*" + filepath.Ext(handler.Filename)
+		tempFile, err := ioutil.TempFile("../temp", tempFilename)
 		if err != nil {
 			log.Println("failed to create tempFile...", err)
 			return
