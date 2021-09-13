@@ -4,47 +4,88 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 
-
 	"cloud.google.com/go/storage"
-	"github.com/ztdevelops/go-project/src/helpers/custom_types"
+	"github.com/ztdevelops/go-project/src/lib/custom"
+	"github.com/ztdevelops/go-project/src/lib/middleware"
 	"google.golang.org/api/option"
 )
 
 // HandleRoutes initialises the connections to all the explicitly coded routes.
 func (a *App) HandleRoutes() {
-	app, err := InitFirebase()
+	app, err := middleware.InitFirebase()
 	if err != nil {
 		log.Fatal("failed to init firebase:", err)
 	}
 
 	a.App = *app
-	a.Router.HandleFunc("/", DefaultHandler).Methods((custom_types.RGET))
-	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom_types.RGET))
+	a.Router.HandleFunc("/", DefaultHandler).Methods((custom.RGET))
+	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom.RGET))
 
 	// APIs (No need for auth)
-	a.Router.HandleFunc("/api/signup", NotImplemented).Methods((custom_types.RPOST))
-	a.Router.HandleFunc("/api/signin", LogInWithFirebase).Methods((custom_types.RPOST))
+	a.Router.HandleFunc("/api/signup", NotImplemented).Methods((custom.RPOST))
+	a.Router.HandleFunc("/api/signin", SignInHandler).Methods((custom.RPOST))
 
 	// APIs (Require auth)
-	a.Router.HandleFunc("/api/test", a.TestVerifyToken).Methods(custom_types.RGET)
-	a.Router.HandleFunc("/api/upload", UploadHandler).Methods(custom_types.RPOST)
+	a.Router.HandleFunc("/api/test", a.TestVerifyToken).Methods(custom.RGET)
+	a.Router.HandleFunc("/api/upload", UploadHandler).Methods(custom.RPOST)
 	http.Handle("/", a.Router)
 }
 
-func transform(w http.ResponseWriter, r *http.Request) (custom_types.CustomWriter, custom_types.CustomRequest) {
-	writer := custom_types.CustomWriter{w}
-	request := custom_types.CustomRequest{r}
-	
+func transform(w http.ResponseWriter, r *http.Request) (custom.CustomWriter, custom.CustomRequest) {
+	writer := custom.CustomWriter{w}
+	request := custom.CustomRequest{r}
+
 	return writer, request
+}
+
+func SignInHandler(w http.ResponseWriter, r *http.Request) {
+	writer, request := transform(w, r)
+	writer.SetContentType(custom.ContentTypeJSON)
+
+	received := custom.User{}
+	if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
+		log.Println("failed to decode user:", err)
+		return
+	}
+
+	// Default to always true.
+	received.ReturnSecureToken = true
+	u, err := json.Marshal(received)
+	if err != nil {
+		log.Println("error marshalling received user:", err)
+		return
+	}
+
+	resp, err := middleware.LoginWithFirebase(u)
+	if err != nil {
+		log.Println("error querying api:", err)
+		return
+	}
+
+	log.Println(resp.Status)
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("error reading response body:", err)
+		return
+	}
+
+	var result custom.UserReponse
+	if err = json.Unmarshal(body, &result); err != nil {
+		log.Println("error unmarshalling result:", err)
+		return
+	}
+	json.NewEncoder(w).Encode(result)
 }
 
 func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	writer, request := transform(w, r)
 	uploadType := request.GetURIParam("type")
-	writer.SetContentType(custom_types.ContentTypeJSON)
+	writer.SetContentType(custom.ContentTypeJSON)
 
 	if uploadType == "file" {
 		request.ParseMultipartForm(10 << 20)
@@ -55,7 +96,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		defer file.Close()
-		
+
 		log.Printf("Uploaded File: %+v\n", handler.Filename)
 		log.Printf("File Size: %+v\n", handler.Size)
 		log.Printf("MIME Header: %+v\n", handler.Header)
@@ -83,7 +124,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (a *App) TestVerifyToken(w http.ResponseWriter, r *http.Request) {
-	if err := VerifyToken(&a.App, r); err != nil {
+	if err := middleware.VerifyToken(&a.App, r); err != nil {
 		log.Println("token failed:", err)
 		return
 	}
@@ -91,14 +132,13 @@ func (a *App) TestVerifyToken(w http.ResponseWriter, r *http.Request) {
 }
 
 func DefaultHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(custom_types.ENDPOINT_HIT, "default")
+	log.Println(custom.ENDPOINT_HIT, "default")
 	fmt.Fprintf(w, "Default landing page.")
 }
 
 func TestAPIHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(custom_types.ENDPOINT_HIT, "test")
-	users := []custom_types.User{
-	}
+	log.Println(custom.ENDPOINT_HIT, "test")
+	users := []custom.User{}
 	json.NewEncoder(w).Encode(users)
 }
 

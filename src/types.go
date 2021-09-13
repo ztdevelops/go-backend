@@ -3,7 +3,7 @@ package main
 import (
 	firebase "firebase.google.com/go"
 	"github.com/gorilla/mux"
-	"github.com/ztdevelops/go-project/src/helpers/database"
+	"github.com/ztdevelops/go-project/src/lib/database"
 )
 
 type Router struct {
