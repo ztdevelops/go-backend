@@ -45,3 +45,8 @@ func LoginWithFirebase(user []byte) (*http.Response, error) {
 	url := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s", custom.GetEnv("API_KEY"))
 	return http.Post(url, custom.ContentTypeJSON, bytes.NewBuffer(user))
 }
+
+func SignUpWithFirebase(user []byte) (*http.Response, error) {
+	url := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=%v", custom.GetEnv("API_KEY"))
+	return http.Post(url, custom.ContentTypeJSON, bytes.NewBuffer(user))
+}

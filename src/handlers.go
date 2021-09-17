@@ -25,7 +25,7 @@ func (a *App) HandleRoutes() {
 	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom.RGET))
 
 	// APIs (No need for auth)
-	a.Router.HandleFunc("/api/signup", NotImplemented).Methods((custom.RPOST))
+	a.Router.HandleFunc("/api/signup", SignUpHandler).Methods((custom.RPOST))
 	a.Router.HandleFunc("/api/signin", SignInHandler).Methods((custom.RPOST))
 
 	// APIs (Require auth)
@@ -41,11 +41,80 @@ func transform(w http.ResponseWriter, r *http.Request) (custom.CustomWriter, cus
 	return writer, request
 }
 
+func SignUpHandler(w http.ResponseWriter, r *http.Request) {
+	writer, request := transform(w, r)
+	writer.SetContentType(custom.ContentTypeJSON)
+
+	// 1. decode received data into User struct
+	received := custom.UserForFirebase{}
+	if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
+		errMsg := fmt.Sprint("failed to decode user:", err)
+		log.Println(errMsg)
+		writer.Respond(http.StatusBadRequest, errMsg)
+		return
+	}
+
+	// 2. marshal received data into JSON
+	received.ReturnSecureToken = true
+	u, err := json.Marshal(received)
+	if err != nil {
+		errMsg := fmt.Sprint("failed to marshal user:", err)
+		log.Println(errMsg)
+		writer.Respond(http.StatusBadRequest, errMsg)
+		return
+	}
+
+	// 3. query firebase to create new user
+	resp, err := middleware.SignUpWithFirebase(u)
+	if err != nil {
+		errMsg := fmt.Sprint("failed to sign up with firebase:", err)
+		log.Println(errMsg)
+		writer.Respond(http.StatusBadRequest, errMsg)
+		return
+	}
+
+	// 4. read response from firebase
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		errMsg := fmt.Sprint("failed to read response:", err)
+		log.Println(errMsg)
+		writer.Respond(http.StatusBadRequest, errMsg)
+		return
+	}
+
+	// 5. unmarshal response into a struct
+	var result map[string]interface{}
+	if err = json.Unmarshal(body, &result); err != nil {
+		errMsg := fmt.Sprint("error unmarshalling results:", err)
+		log.Println(errMsg)
+		writer.Respond(resp.StatusCode, errMsg)
+		return
+	}
+
+	// 6. check for potential errors revealed in api response from firebase
+	if resp.StatusCode != http.StatusOK {
+		errJSON, ok := result["error"].(map[string]interface{})
+		if !ok {
+			log.Println("something went wrong...")
+			writer.Respond(http.StatusInternalServerError, "something went wrong... Maybe firebase changed their API response?")
+			return
+		}
+		errMsg := errJSON["message"]
+		log.Println(errMsg)
+		writer.Respond(resp.StatusCode, errMsg)
+		return
+	}
+
+	// 7. return response
+	result["status"] = http.StatusOK
+	json.NewEncoder(writer).Encode(result)
+}
+
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	writer, request := transform(w, r)
 	writer.SetContentType(custom.ContentTypeJSON)
 
-	received := custom.User{}
+	received := custom.UserForFirebase{}
 	if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
 		errMsg := fmt.Sprint("failed to decode user:", err)
 		log.Println(errMsg)
@@ -85,11 +154,12 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result custom.UserReponse
+	var result custom.UserSignInResponse
 	if err = json.Unmarshal(body, &result); err != nil {
 		log.Println("error unmarshalling result:", err)
 		return
 	}
+	result.Status = http.StatusOK
 	json.NewEncoder(w).Encode(result)
 }
 
