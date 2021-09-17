@@ -10,14 +10,13 @@ import (
 
 	firebase "firebase.google.com/go"
 	"github.com/ztdevelops/go-project/src/lib/custom"
-	"google.golang.org/api/option"
 )
 
 // InitFirebase initialises the connection to Firebase, which
 // will be used for auth purposes. Returns a firebase App
 // object if done successfully. Else, it will return an error.
 func InitFirebase() (*firebase.App, error) {
-	opt := option.WithCredentialsFile("credentials.json")
+	opt := custom.GetOpt("FIREBASE_JSON")
 	return firebase.NewApp(context.Background(), nil, opt)
 }
 
@@ -33,7 +32,6 @@ func VerifyToken(a *firebase.App, r *http.Request) (err error) {
 		return
 	}
 	idToken := strings.Split(bearerToken, "Bearer ")[1]
-
 	_, err = client.VerifyIDToken(ctx, idToken)
 	if err != nil {
 		return
@@ -41,7 +39,7 @@ func VerifyToken(a *firebase.App, r *http.Request) (err error) {
 	return
 }
 
-// LoginWithFirebase queries the Firebase servers 
+// LoginWithFirebase queries the Firebase servers
 // in an attempt to authenticate the user.
 func LoginWithFirebase(user []byte) (*http.Response, error) {
 	url := fmt.Sprintf("https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=%s", custom.GetEnv("API_KEY"))

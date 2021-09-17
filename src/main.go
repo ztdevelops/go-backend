@@ -12,13 +12,13 @@ import (
 
 func main() {
 	if err := custom.LoadEnv(); err != nil {
-		log.Println("error loading .env:", err)		
+		log.Println("error loading .env:", err)
 	}
 
 	SharedApp.Router = Router{
 		mux.NewRouter(),
 	}
-	SharedApp.HandleRoutes()	
+	SharedApp.HandleRoutes()
 	SharedApp.InitDatabaseConnection()
 
 	allowedHeaders := []string{"GET", "POST"}
