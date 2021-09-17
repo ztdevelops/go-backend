@@ -11,13 +11,31 @@ type User struct {
 	ReturnSecureToken bool   `json:"returnSecureToken"`
 }
 
-type UserReponse struct {
+// Struct created for querying firebase APIs.
+// Firebase only requires Email, Password, and ReturnSecureToken.
+type UserForFirebase struct {
+	Email             string `json:"email"`
+	Password          string `json:"password"`
+	ReturnSecureToken bool   `json:"returnSecureToken"`
+}
+
+type userResponse struct {
+	Status       int    `json:"status"`
 	IDToken      string `json:"idToken"`
 	Email        string `json:"email"`
 	RefreshToken string `json:"refreshToken"`
 	ExpiresIn    string `json:"expiresIn"`
 	LocalID      string `json:"localId"`
-	Registered   bool   `json:"registered"`
+}
+
+type UserSignInResponse struct {
+	userResponse
+	Registered bool `json:"registered"`
+}
+
+type UserSignUpResponse struct {
+	userResponse
+	Kind string `json:"kind"`
 }
 
 type Jwks struct {
