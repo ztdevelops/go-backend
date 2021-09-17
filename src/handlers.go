@@ -46,7 +46,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	writer.SetContentType(custom.ContentTypeJSON)
 
 	// 1. decode received data into User struct
-	received := custom.User{}
+	received := custom.UserForFirebase{}
 	if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
 		errMsg := fmt.Sprint("failed to decode user:", err)
 		log.Println(errMsg)
@@ -83,23 +83,38 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 5. unmarshal response into a struct
-	var response map[string]interface{}
-	if err = json.Unmarshal(body, &response); err != nil {
+	var result map[string]interface{}
+	if err = json.Unmarshal(body, &result); err != nil {
 		errMsg := fmt.Sprint("error unmarshalling results:", err)
 		log.Println(errMsg)
 		writer.Respond(resp.StatusCode, errMsg)
 		return
 	}
 
-	// 6. return response
-	writer.Respond(http.StatusOK, response)
+	// 6. check for potential errors revealed in api response from firebase
+	if resp.StatusCode != http.StatusOK {
+		errJSON, ok := result["error"].(map[string]interface{})
+		if !ok {
+			log.Println("something went wrong...")
+			writer.Respond(http.StatusInternalServerError, "something went wrong... Maybe firebase changed their API response?")
+			return
+		}
+		errMsg := errJSON["message"]
+		log.Println(errMsg)
+		writer.Respond(resp.StatusCode, errMsg)
+		return
+	}
+
+	// 7. return response
+	result["status"] = http.StatusOK
+	json.NewEncoder(writer).Encode(result)
 }
 
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	writer, request := transform(w, r)
 	writer.SetContentType(custom.ContentTypeJSON)
 
-	received := custom.User{}
+	received := custom.UserForFirebase{}
 	if err := json.NewDecoder(request.Body).Decode(&received); err != nil {
 		errMsg := fmt.Sprint("failed to decode user:", err)
 		log.Println(errMsg)
@@ -139,11 +154,12 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var result custom.UserReponse
+	var result custom.UserSignInResponse
 	if err = json.Unmarshal(body, &result); err != nil {
 		log.Println("error unmarshalling result:", err)
 		return
 	}
+	result.Status = http.StatusOK
 	json.NewEncoder(w).Encode(result)
 }
 
