@@ -1,4 +1,4 @@
-package custom_types
+package custom
 
 import (
 	"net/http"
@@ -34,13 +34,13 @@ type JSONWebKeys struct {
 }
 
 type Response struct {
-	Status 	int
+	Status  int
 	Message interface{}
 }
 
-/* 
+/*
 	STRUCT EXTENSIONS
-*/ 
+*/
 type CustomWriter struct {
 	http.ResponseWriter
 }

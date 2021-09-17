@@ -5,8 +5,6 @@ import (
 
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-
-	// "github.com/ztdevelops/go-project/src/helpers/custom_types"
 )
 
 func (database *Database) InitDatabaseConnection() {
@@ -24,5 +22,4 @@ func (database *Database) InitDatabaseConnection() {
 
 func (database *Database) MigrateTables() {
 	log.Println("Migrating tables.")
-	// database.AutoMigrate(&custom_types.User{})
 }

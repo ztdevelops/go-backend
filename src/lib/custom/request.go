@@ -1,8 +1,4 @@
-package custom_types
-
-import (
-
-)
+package custom
 
 func (r CustomRequest) GetURIParam(key string) string {
 	return r.URL.Query().Get(key)
