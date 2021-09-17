@@ -21,19 +21,19 @@ func (a *App) HandleRoutes() {
 	}
 
 	a.App = *app
-	a.Router.HandleFunc("/", DefaultHandler).Methods((custom.RGET))
-	a.Router.HandleFunc("/test", TestAPIHandler).Methods((custom.RGET))
 
 	// APIs (No need for auth)
 	a.Router.HandleFunc("/api/signup", SignUpHandler).Methods((custom.RPOST))
 	a.Router.HandleFunc("/api/signin", SignInHandler).Methods((custom.RPOST))
 
 	// APIs (Require auth)
-	a.Router.HandleFunc("/api/test", a.TestVerifyToken).Methods(custom.RGET)
-	a.Router.HandleFunc("/api/upload", UploadHandler).Methods(custom.RPOST)
+	a.Router.HandleFunc("/api/upload", a.UploadHandler).Methods(custom.RPOST)
+	
 	http.Handle("/", a.Router)
 }
 
+// transform converts the standard http.ResponseWriter and http.Request params
+// to a custom writer and request, where we can use our own methods!
 func transform(w http.ResponseWriter, r *http.Request) (custom.CustomWriter, custom.CustomRequest) {
 	writer := custom.CustomWriter{w}
 	request := custom.CustomRequest{r}
@@ -41,6 +41,7 @@ func transform(w http.ResponseWriter, r *http.Request) (custom.CustomWriter, cus
 	return writer, request
 }
 
+// SignUpHandler creates an account for the user.
 func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	writer, request := transform(w, r)
 	writer.SetContentType(custom.ContentTypeJSON)
@@ -110,6 +111,7 @@ func SignUpHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(writer).Encode(result)
 }
 
+// SignInHandler attempts to log in for the user.
 func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	writer, request := transform(w, r)
 	writer.SetContentType(custom.ContentTypeJSON)
@@ -163,10 +165,19 @@ func SignInHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
-func UploadHandler(w http.ResponseWriter, r *http.Request) {
+// UploadHandler handles the uploading of data.
+func (a *App) UploadHandler(w http.ResponseWriter, r *http.Request) {
 	writer, request := transform(w, r)
-	uploadType := request.GetURIParam("type")
 	writer.SetContentType(custom.ContentTypeJSON)
+
+	if err := middleware.VerifyToken(&a.App, r); err != nil {
+		errMsg := fmt.Sprint("token failed:", err)
+		log.Println(errMsg)
+		writer.Respond(http.StatusUnauthorized, "invalid token")
+		return
+	}
+
+	uploadType := request.GetURIParam("type")
 
 	switch uploadType {
 	case "file":
@@ -174,6 +185,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// handleFileUpload handles file uploads specifically.
 func handleFileUpload(w custom.CustomWriter, r custom.CustomRequest) {
 	r.ParseMultipartForm(10 << 20)
 
@@ -217,25 +229,7 @@ func handleFileUpload(w custom.CustomWriter, r custom.CustomRequest) {
 	w.Respond(http.StatusOK, "file successfully uploaded")
 }
 
-func (a *App) TestVerifyToken(w http.ResponseWriter, r *http.Request) {
-	if err := middleware.VerifyToken(&a.App, r); err != nil {
-		log.Println("token failed:", err)
-		return
-	}
-	log.Println("token ok.")
-}
-
-func DefaultHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(custom.ENDPOINT_HIT, "default")
-	fmt.Fprintf(w, "Default landing page.")
-}
-
-func TestAPIHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println(custom.ENDPOINT_HIT, "test")
-	users := []custom.User{}
-	json.NewEncoder(w).Encode(users)
-}
-
+// NotImplemented acts as a placeholder function.
 func NotImplemented(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Not implemented.")
 }
